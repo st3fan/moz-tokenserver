@@ -6,3 +6,8 @@ This project implements a very minimal [Token Server](https://docs.services.mozi
 Running both of these services allows you to host your own Firefox Sync storage solution.
 
 > Note: this is work in progress and has not reached a stable version yet.
+
+Requirements
+------------
+
+This project requires Go 1.3.1 and some external dependencies that are available on Github.
