@@ -1,0 +1,4 @@
+moz-tokenserver
+===============
+
+Token Server
