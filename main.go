@@ -17,16 +17,16 @@ import (
 
 // TODO: This should all move to either config file or command line options
 const (
-	TOKENSERVER_ROOT             = "/tokenserver"
-	TOKENSERVER_LISTEN_ADDRESS   = "127.0.0.1"
-	TOKENSERVER_LISTEN_PORT      = 8123
-	TOKENSERVER_PERSONA_VERIFIER = "https://verifier.login.persona.org"
-	TOKENSERVER_PERSONA_AUDIENCE = "https://tokenserver.sateh.com"
-	TOKENSERVER_ALLOW_NEW_USERS  = true
-	TOKENSERVER_TOKEN_DURATION   = 300
-	TOKENSERVER_SECRET           = "cheesebaconeggs"
-	TOKENSERVER_STORAGESERVER    = "http://127.0.0.1:8124/storage"
-	TOKENSERVER_DATABASE_URL     = "postgres://tokenserver:tokenserver@localhost/tokenserver"
+	TOKENSERVER_API_ROOT           = "/tokenserver"
+	TOKENSERVER_API_LISTEN_ADDRESS = "0.0.0.0"
+	TOKENSERVER_API_LISTEN_PORT    = 8123
+	TOKENSERVER_PERSONA_VERIFIER   = "https://verifier.login.persona.org"
+	TOKENSERVER_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
+	TOKENSERVER_ALLOW_NEW_USERS    = true
+	TOKENSERVER_TOKEN_DURATION     = 300
+	TOKENSERVER_SHARED_SECRET      = "cheesebaconeggs"
+	TOKENSERVER_STORAGESERVER      = "http://127.0.0.1:8124/storage"
+	TOKENSERVER_DATABASE           = "postgres://tokenserver:tokenserver@localhost/tokenserver"
 )
 
 type TokenServerResponse struct {
@@ -95,7 +95,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	// Load the user. Create if new and if signups are allowed.
 
-	db, err := NewDatabaseSession(TOKENSERVER_DATABASE_URL)
+	db, err := NewDatabaseSession(TOKENSERVER_DATABASE)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -177,7 +177,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	expires := time.Now().Unix() + TOKENSERVER_TOKEN_DURATION
 
 	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, user.Node, expires,
-		TOKENSERVER_SECRET)
+		TOKENSERVER_SHARED_SECRET)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -204,9 +204,9 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc(TOKENSERVER_ROOT+"/1.0/sync/1.5", handleStuff)
-	addr := fmt.Sprintf("%s:%d", TOKENSERVER_LISTEN_ADDRESS, TOKENSERVER_LISTEN_PORT)
-	log.Printf("Starting tokenserver server on http://%s%s", addr, TOKENSERVER_ROOT)
+	http.HandleFunc(TOKENSERVER_API_ROOT+"/1.0/sync/1.5", handleStuff)
+	addr := fmt.Sprintf("%s:%d", TOKENSERVER_API_LISTEN_ADDRESS, TOKENSERVER_API_LISTEN_PORT)
+	log.Printf("Starting tokenserver server on http://%s%s", addr, TOKENSERVER_API_ROOT)
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal(err)
