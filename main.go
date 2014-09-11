@@ -7,7 +7,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/st3fan/moz-go-persona"
 	"log"
 	"net/http"
 	"regexp"
@@ -20,7 +19,7 @@ const (
 	TOKENSERVER_API_ROOT           = "/tokenserver"
 	TOKENSERVER_API_LISTEN_ADDRESS = "0.0.0.0"
 	TOKENSERVER_API_LISTEN_PORT    = 8123
-	TOKENSERVER_PERSONA_VERIFIER   = "https://verifier.login.persona.org"
+	TOKENSERVER_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
 	TOKENSERVER_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
 	TOKENSERVER_ALLOW_NEW_USERS    = true
 	TOKENSERVER_TOKEN_DURATION     = 300
@@ -30,11 +29,11 @@ const (
 )
 
 type TokenServerResponse struct {
-	Id          string `json: "id"`           // Signed authorization token
-	Key         string `json: "key"`          // Secret derived from the shared secret
-	Uid         string `json: "uid"`          // The user id for this service
-	ApiEndpoint string `json: "api_endpoint"` // The root URL for the user of this service
-	Duration    int64  `json: "duration"`     // the validity duration of the issued token, in seconds
+	Id          string `json:"id"`           // Signed authorization token
+	Key         string `json:"key"`          // Secret derived from the shared secret
+	Uid         string `json:"uid"`          // The user id for this service
+	ApiEndpoint string `json:"api_endpoint"` // The root URL for the user of this service
+	Duration    int64  `json:"duration"`     // the validity duration of the issued token, in seconds
 }
 
 var clientIdValidator = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,32}$`)
@@ -72,11 +71,13 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	// Verify the assertion
 
-	verifier, err := persona.NewVerifier(TOKENSERVER_PERSONA_VERIFIER, TOKENSERVER_PERSONA_AUDIENCE)
+	verifier, err := NewVerifier(TOKENSERVER_PERSONA_VERIFIER, TOKENSERVER_PERSONA_AUDIENCE)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Verifying %s", assertion)
 
 	personaResponse, err := verifier.VerifyAssertion(assertion)
 	if err != nil {
@@ -84,7 +85,10 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Done verifying: %+v", personaResponse)
+
 	if personaResponse.Status != "okay" {
+		log.Printf("%+v", personaResponse)
 		http.Error(w, "Invalid BrowserID assertion", http.StatusUnauthorized)
 		return
 	}
