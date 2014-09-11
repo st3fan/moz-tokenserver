@@ -17,7 +17,6 @@ import (
 
 // TODO: This should all move to either config file or command line options
 const (
-	TOKENSERVER_DATABASE         = "/var/lib/tokenserver/users.db"
 	TOKENSERVER_ROOT             = "/tokenserver"
 	TOKENSERVER_LISTEN_ADDRESS   = "127.0.0.1"
 	TOKENSERVER_LISTEN_PORT      = 8123
@@ -27,6 +26,7 @@ const (
 	TOKENSERVER_TOKEN_DURATION   = 300
 	TOKENSERVER_SECRET           = "cheesebaconeggs"
 	TOKENSERVER_STORAGESERVER    = "http://127.0.0.1:8124/storage"
+	TOKENSERVER_DATABASE_URL     = "postgres://tokenserver:tokenserver@localhost/tokenserver"
 )
 
 type TokenServerResponse struct {
@@ -91,13 +91,21 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	// Grab some things we need from the assertion
 
-	generation := 1
+	generation := 1 // TODO: This needs to be parsed from the assertion
 
 	// Load the user. Create if new and if signups are allowed.
 
+	db, err := NewDatabaseSession(TOKENSERVER_DATABASE_URL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+
 	var user *User
 
-	user, err = GetUser(personaResponse.Email)
+	user, err = db.GetUser(personaResponse.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -105,7 +113,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		if TOKENSERVER_ALLOW_NEW_USERS {
-			user, err = AllocateUser(personaResponse.Email, generation, clientState)
+			user, err = db.AllocateUser(personaResponse.Email, generation, clientState)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -148,7 +156,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if newGeneration != 0 || len(newClientState) != 0 {
-		user, err = UpdateUser(user.Email, newGeneration, newClientState)
+		user, err = db.UpdateUser(user.Email, newGeneration, newClientState)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

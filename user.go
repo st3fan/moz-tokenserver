@@ -4,32 +4,42 @@
 
 package main
 
-type User struct {
-	Email           string
-	Uid             string
-	Node            string
-	Generation      int
-	ClientState     string
-	OldClientStates []string
-}
+/*
+uid
+email
+nodeid
+generation
+clientstate
+created_at
+replaced_at
+*/
 
-func (u *User) IsOldClientState(clientState string) bool {
-	for _, oldClientState := range u.OldClientStates {
-		if clientState == oldClientState {
-			return true
-		}
-	}
-	return false
-}
+// type User struct {
+// 	Uid             string
+// 	Email           string
+// 	Node            string
+// 	Generation      int
+// 	ClientState     string
+// 	OldClientStates []string
+// }
 
-func GetUser(email string) (*User, error) {
-	return nil, nil
-}
+// func (u *User) IsOldClientState(clientState string) bool {
+// 	for _, oldClientState := range u.OldClientStates {
+// 		if clientState == oldClientState {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
-func AllocateUser(email string, generation int, clientState string) (*User, error) {
-	return nil, nil
-}
+// func GetUser(email string) (*User, error) {
+// 	return nil, nil
+// }
 
-func UpdateUser(email string, newGeneration int, newClientState string) (*User, error) {
-	return nil, nil
-}
+// func AllocateUser(email string, generation int, clientState string) (*User, error) {
+// 	return nil, nil
+// }
+
+// func UpdateUser(email string, newGeneration int, newClientState string) (*User, error) {
+// 	return nil, nil
+// }
