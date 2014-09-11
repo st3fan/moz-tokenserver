@@ -5,7 +5,11 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha1"
 	"database/sql"
+	"encoding/hex"
 	_ "github.com/lib/pq"
 )
 
@@ -25,6 +29,25 @@ func (u *User) IsOldClientState(clientState string) bool {
 		}
 	}
 	return false
+}
+
+func randomNodeKey() ([]byte, error) {
+	data := make([]byte, 16)
+	_, err := rand.Read(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func randomNodeId(email string) (string, error) {
+	key, err := randomNodeKey()
+	if err != nil {
+		return "", err
+	}
+	mac := hmac.New(sha1.New, key)
+	mac.Write([]byte(email))
+	return hex.EncodeToString(mac.Sum(nil)), nil
 }
 
 type DatabaseSession struct {
@@ -49,13 +72,44 @@ func (session *DatabaseSession) Close() {
 }
 
 func (ds *DatabaseSession) GetUser(email string) (*User, error) {
-	return nil, nil
+	var user User
+	err := ds.db.QueryRow("select Uid,Email,Node,Generation,Clientstate from Users where Email = $1", email).
+		Scan(&user.Uid, &user.Email, &user.Node, &user.Generation, &user.ClientState)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &user, nil
 }
 
 func (ds *DatabaseSession) AllocateUser(email string, generation int, clientState string) (*User, error) {
-	return nil, nil
+	node, err := randomNodeId(email)
+	if err != nil {
+		return nil, err
+	}
+	_, err = ds.db.Exec("insert into Users (Email, Node, Generation, ClientState) values ($1,$2,$3,$4)", email, node, generation, clientState)
+	if err != nil {
+		return nil, err
+	}
+	return ds.GetUser(email)
 }
 
 func (ds *DatabaseSession) UpdateUser(email string, newGeneration int, newClientState string) (*User, error) {
-	return nil, nil
+	// TODO: Maybe this should run together in a transaction?
+	if newGeneration != 0 {
+		_, err := ds.db.Exec("update Users set Generation = $1 where Email = $2", newGeneration, email)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(newClientState) != 0 {
+		_, err := ds.db.Exec("update Users set ClientState = $1 where Email = $2", newClientState, email)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ds.GetUser(email)
 }
