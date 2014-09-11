@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // TODO: This should all move to either config file or command line options
@@ -165,13 +166,10 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	// Finally, create token and secret
 
-	token, err := GenerateToken(user.Uid, user.Node, TOKENSERVER_TOKEN_DURATION, TOKENSERVER_SECRET)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	expires := time.Now().Unix() + TOKENSERVER_TOKEN_DURATION
 
-	secret, err := GenerateDerivedSecret(token, TOKENSERVER_SECRET)
+	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, user.Node, expires,
+		TOKENSERVER_SECRET)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -180,8 +178,8 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	// All done, build a response
 
 	tokenServerResponse := &TokenServerResponse{
-		Id:          token,
-		Key:         secret,
+		Id:          tokenSecret,
+		Key:         derivedSecret,
 		Uid:         user.Uid,
 		ApiEndpoint: fmt.Sprintf("%s/storage/%s", TOKENSERVER_STORAGESERVER, user.Node),
 		Duration:    TOKENSERVER_TOKEN_DURATION,
