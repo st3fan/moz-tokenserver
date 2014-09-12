@@ -1,3 +1,5 @@
+![Build Status](https://travis-ci.org/st3fan/moz-tokenserver.svg?branch=master)
+
 moz-tokenserver
 ===============
 
