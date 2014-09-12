@@ -16,7 +16,7 @@ import (
 type User struct {
 	Uid             string
 	Email           string
-	Node            string
+	NodeId          string
 	Generation      int
 	ClientState     string
 	OldClientStates []string
@@ -73,8 +73,8 @@ func (session *DatabaseSession) Close() {
 
 func (ds *DatabaseSession) GetUser(email string) (*User, error) {
 	var user User
-	err := ds.db.QueryRow("select Uid,Email,Node,Generation,Clientstate from Users where Email = $1", email).
-		Scan(&user.Uid, &user.Email, &user.Node, &user.Generation, &user.ClientState)
+	err := ds.db.QueryRow("select Uid,Email,NodeId,Generation,Clientstate from Users where Email = $1", email).
+		Scan(&user.Uid, &user.Email, &user.NodeId, &user.Generation, &user.ClientState)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -90,7 +90,7 @@ func (ds *DatabaseSession) AllocateUser(email string, generation int, clientStat
 	if err != nil {
 		return nil, err
 	}
-	_, err = ds.db.Exec("insert into Users (Email, Node, Generation, ClientState) values ($1,$2,$3,$4)", email, node, generation, clientState)
+	_, err = ds.db.Exec("insert into Users (Email, NodeId, Generation, ClientState) values ($1,$2,$3,$4)", email, node, generation, clientState)
 	if err != nil {
 		return nil, err
 	}

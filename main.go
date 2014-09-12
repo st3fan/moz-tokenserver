@@ -180,7 +180,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	expires := time.Now().Unix() + TOKENSERVER_TOKEN_DURATION
 
-	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, user.Node, expires,
+	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, user.NodeId, expires,
 		TOKENSERVER_SHARED_SECRET)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -193,7 +193,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 		Id:          tokenSecret,
 		Key:         derivedSecret,
 		Uid:         user.Uid,
-		ApiEndpoint: fmt.Sprintf("%s/storage/%s", TOKENSERVER_STORAGESERVER, user.Node),
+		ApiEndpoint: fmt.Sprintf("%s/storage/%s", TOKENSERVER_STORAGESERVER, user.NodeId),
 		Duration:    TOKENSERVER_TOKEN_DURATION,
 	}
 
