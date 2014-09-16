@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,7 +10,6 @@ import (
 )
 
 func init() {
-	setupHandlers()
 }
 
 func Test_handleStuff(t *testing.T) {
@@ -23,11 +23,21 @@ func Test_handleStuff(t *testing.T) {
 	}
 
 	// Exchange the assertion for an access token
-	request, _ := http.NewRequest("GET", TOKENSERVER_API_ROOT+"/1.0/sync/1.5", nil)
+	request, _ := http.NewRequest("GET", TOKENSERVER_API_PREFIX+"/1.0/sync/1.5", nil)
 	request.Header.Set("Authorization", "BrowserID "+assertion)
 	response := httptest.NewRecorder()
 
-	handleStuff(response, request)
+	//
+	router := mux.NewRouter()
+	router.HandleFunc("/version", VersionHandler)
+	context, err := SetupTokenServerRouter(router.PathPrefix(TOKENSERVER_API_PREFIX).Subrouter(), TOKENSERVER_DATABASE)
+	if err != nil {
+		panic("Cannot setup router")
+	}
+	http.Handle("/", router)
+
+	//
+	context.SyncTokenHandler(response, request)
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("Non-expected status code%v:\n\tbody: %v", response.Code, response.Body)

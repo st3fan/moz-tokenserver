@@ -7,6 +7,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"regexp"
@@ -16,7 +17,7 @@ import (
 
 // TODO: This should all move to either config file or command line options
 const (
-	TOKENSERVER_API_ROOT           = "/tokenserver"
+	TOKENSERVER_API_PREFIX         = "/tokenserver"
 	TOKENSERVER_API_LISTEN_ADDRESS = "0.0.0.0"
 	TOKENSERVER_API_LISTEN_PORT    = 8123
 	TOKENSERVER_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
@@ -38,7 +39,11 @@ type TokenServerResponse struct {
 
 var clientIdValidator = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,32}$`)
 
-func handleStuff(w http.ResponseWriter, r *http.Request) {
+type tokenServerContext struct {
+	db *DatabaseSession
+}
+
+func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure we have a BrowserID Authorization header
 
 	authorization := r.Header.Get("Authorization")
@@ -99,17 +104,8 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	// Load the user. Create if new and if signups are allowed.
 
-	db, err := NewDatabaseSession(TOKENSERVER_DATABASE)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	defer db.Close()
-
 	var user *User
-
-	user, err = db.GetUser(personaResponse.Email)
+	user, err = c.db.GetUser(personaResponse.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -117,7 +113,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		if TOKENSERVER_ALLOW_NEW_USERS {
-			user, err = db.AllocateUser(personaResponse.Email, generation, clientState)
+			user, err = c.db.AllocateUser(personaResponse.Email, generation, clientState)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -160,7 +156,7 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if newGeneration != 0 || len(newClientState) != 0 {
-		user, err = db.UpdateUser(user.Email, newGeneration, newClientState)
+		user, err = c.db.UpdateUser(user.Email, newGeneration, newClientState)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -207,15 +203,35 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func setupHandlers() {
-	http.HandleFunc(TOKENSERVER_API_ROOT+"/1.0/sync/1.5", handleStuff)
+func SetupTokenServerRouter(r *mux.Router, databaseUrl string) (*tokenServerContext, error) {
+	db, err := NewDatabaseSession(databaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	context := &tokenServerContext{db: db}
+	r.HandleFunc("/1.0/sync/1.5", context.SyncTokenHandler)
+
+	return context, nil
+}
+
+func VersionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("1.0"))
 }
 
 func main() {
-	setupHandlers()
+	router := mux.NewRouter()
+	router.HandleFunc("/version", VersionHandler)
+
+	_, err := SetupTokenServerRouter(router.PathPrefix(TOKENSERVER_API_PREFIX).Subrouter(), TOKENSERVER_DATABASE)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	addr := fmt.Sprintf("%s:%d", TOKENSERVER_API_LISTEN_ADDRESS, TOKENSERVER_API_LISTEN_PORT)
-	log.Printf("Starting tokenserver server on http://%s%s", addr, TOKENSERVER_API_ROOT)
-	err := http.ListenAndServe(addr, nil)
+	log.Printf("Starting tokenserver server on http://%s", addr)
+	http.Handle("/", router)
+	err = http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
