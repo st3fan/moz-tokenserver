@@ -3,3 +3,14 @@ language: go
 go:
   - 1.2
   - 1.3
+
+env:
+  - PGPASSWORD=tokenserver
+
+addons:
+  postgresql: "9.3"
+
+before_script:
+  - psql -c "create user tokenserver with password 'tokenserver';" -U postgres
+  - psql -c 'create database tokenserver owner tokenserver;' -U postgres
+  - psql -f setup.sql -U tokenserver -d tokenserver
