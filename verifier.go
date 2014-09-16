@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -41,14 +40,10 @@ func (v *Verifier) VerifyAssertion(assertion string) (*VerifierResponse, error) 
 		Assertion: assertion,
 	}
 
-	//log.Printf("Moo: %+v", verifierRequest)
-
 	encodedVerifierRequest, err := json.Marshal(verifierRequest)
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("Encoded Verifier Request: %s", string(encodedVerifierRequest))
 
 	req, err := http.NewRequest("POST", v.verifier, bytes.NewBuffer(encodedVerifierRequest))
 	if err != nil {
@@ -62,8 +57,6 @@ func (v *Verifier) VerifyAssertion(assertion string) (*VerifierResponse, error) 
 		return nil, err
 	}
 	defer res.Body.Close()
-
-	//log.Printf("Res: %+v", res)
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
