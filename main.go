@@ -207,8 +207,12 @@ func handleStuff(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func main() {
+func setupHandlers() {
 	http.HandleFunc(TOKENSERVER_API_ROOT+"/1.0/sync/1.5", handleStuff)
+}
+
+func main() {
+	setupHandlers()
 	addr := fmt.Sprintf("%s:%d", TOKENSERVER_API_LISTEN_ADDRESS, TOKENSERVER_API_LISTEN_PORT)
 	log.Printf("Starting tokenserver server on http://%s%s", addr, TOKENSERVER_API_ROOT)
 	err := http.ListenAndServe(addr, nil)
