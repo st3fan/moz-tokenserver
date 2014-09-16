@@ -20,7 +20,7 @@ type MockMyIDResponse struct {
 
 func RequestAssertion(email, audience string) (string, error) {
 
-	u, err := url.Parse("http://127.0.0.1:8080/assertion")
+	u, err := url.Parse("https://mockmyid-api.sateh.com/assertion")
 	if err != nil {
 		return "", err
 	}
@@ -61,6 +61,9 @@ func Test_Verify(t *testing.T) {
 	assertion, err := RequestAssertion("test@mockmyid.com", TOKENSERVER_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not request assertion", err)
+	}
+	if len(assertion) == 0 {
+		t.Error("Could not create assertion (it is zero length or not returned)")
 	}
 
 	// Run it through the verifier
