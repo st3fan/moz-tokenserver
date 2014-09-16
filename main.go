@@ -82,18 +82,13 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	log.Printf("Verifying %s", assertion)
-
 	personaResponse, err := verifier.VerifyAssertion(assertion)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Done verifying: %+v", personaResponse)
-
 	if personaResponse.Status != "okay" {
-		log.Printf("%+v", personaResponse)
 		http.Error(w, "Invalid BrowserID assertion", http.StatusUnauthorized)
 		return
 	}
@@ -123,8 +118,6 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
-
-	log.Printf("User is %s", user.Email)
 
 	// Deal with generation
 
