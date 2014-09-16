@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -29,5 +31,33 @@ func Test_handleStuff(t *testing.T) {
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("Non-expected status code%v:\n\tbody: %v", response.Code, response.Body)
+	}
+
+	tokenServerResponse := &TokenServerResponse{}
+	if err = json.Unmarshal(response.Body.Bytes(), tokenServerResponse); err != nil {
+		t.Fatal("Can't unmarshal token server response", err)
+	}
+
+	if len(tokenServerResponse.Id) == 0 {
+		t.Fatal("Token server did not return Id")
+	}
+
+	if len(tokenServerResponse.Key) == 0 {
+		t.Fatal("Token server did not return Key")
+	}
+
+	if len(tokenServerResponse.Uid) == 0 {
+		t.Fatal("Token server did not return Uid")
+	}
+
+	if len(tokenServerResponse.ApiEndpoint) == 0 {
+		t.Fatal("Token server did not return ApiEndpoint")
+	}
+	if !strings.HasPrefix(tokenServerResponse.ApiEndpoint, TOKENSERVER_STORAGESERVER+"/storage/") {
+		t.Fatal("Token server did not return expected ApiEndpoint")
+	}
+
+	if tokenServerResponse.Duration == 0 {
+		t.Fatal("Token server returned zero Duration")
 	}
 }
