@@ -15,6 +15,11 @@ before_script:
   - psql -c 'create database tokenserver owner tokenserver;' -U postgres
   - psql -f setup.sql -U tokenserver -d tokenserver
 
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - go get code.google.com/p/go.tools/cmd/cover
+
 script:
   - $HOME/gopath/bin/goveralls -repotoken kMZDPrdqpOKa3CXHCwgCz4pmqqKgzojXv
 
