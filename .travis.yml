@@ -14,3 +14,7 @@ before_script:
   - psql -c "create user tokenserver with password 'tokenserver';" -U postgres
   - psql -c 'create database tokenserver owner tokenserver;' -U postgres
   - psql -f setup.sql -U tokenserver -d tokenserver
+
+script:
+  - $HOME/gopath/bin/goveralls -repotoken kMZDPrdqpOKa3CXHCwgCz4pmqqKgzojXv
+
