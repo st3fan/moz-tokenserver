@@ -50,7 +50,7 @@ func RequestAssertion(email, audience string) (string, error) {
 }
 
 func Test_NewVerifier(t *testing.T) {
-	_, err := NewVerifier(TOKENSERVER_PERSONA_VERIFIER, TOKENSERVER_PERSONA_AUDIENCE)
+	_, err := NewVerifier(DEFAULT_PERSONA_VERIFIER, DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not create a verifier")
 	}
@@ -58,7 +58,7 @@ func Test_NewVerifier(t *testing.T) {
 
 func Test_Verify(t *testing.T) {
 	// Grab an assertion from the mockmyid api
-	assertion, err := RequestAssertion("test@mockmyid.com", TOKENSERVER_PERSONA_AUDIENCE)
+	assertion, err := RequestAssertion("test@mockmyid.com", DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not request assertion", err)
 	}
@@ -67,7 +67,7 @@ func Test_Verify(t *testing.T) {
 	}
 
 	// Run it through the verifier
-	verifier, err := NewVerifier(TOKENSERVER_PERSONA_VERIFIER, TOKENSERVER_PERSONA_AUDIENCE)
+	verifier, err := NewVerifier(DEFAULT_PERSONA_VERIFIER, DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not create a verifier")
 	}

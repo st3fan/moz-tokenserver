@@ -17,17 +17,39 @@ import (
 
 // TODO: This should all move to either config file or command line options
 const (
-	TOKENSERVER_API_PREFIX         = "/tokenserver"
-	TOKENSERVER_API_LISTEN_ADDRESS = "0.0.0.0"
-	TOKENSERVER_API_LISTEN_PORT    = 8123
-	TOKENSERVER_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
-	TOKENSERVER_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
-	TOKENSERVER_ALLOW_NEW_USERS    = true
-	TOKENSERVER_TOKEN_DURATION     = 300
-	TOKENSERVER_SHARED_SECRET      = "cheesebaconeggs"
-	TOKENSERVER_STORAGESERVER      = "http://127.0.0.1:8124/storage"
-	TOKENSERVER_DATABASE           = "postgres://tokenserver:tokenserver@localhost/tokenserver"
+	DEFAULT_API_PREFIX         = "/tokenserver"
+	DEFAULT_API_LISTEN_ADDRESS = "0.0.0.0"
+	DEFAULT_API_LISTEN_PORT    = 8123
+	DEFAULT_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
+	DEFAULT_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
+	DEFAULT_ALLOW_NEW_USERS    = true
+	DEFAULT_TOKEN_DURATION     = 300
+	DEFAULT_SHARED_SECRET      = "cheesebaconeggs"
+	DEFAULT_STORAGESERVER_URL  = "http://127.0.0.1:8124/storage"
+	DEFAULT_DATABASE_URL       = "postgres://tokenserver:tokenserver@localhost/tokenserver"
 )
+
+type TokenServerConfig struct {
+	PersonaVerifier  string
+	PersonaAudience  string
+	AllowNewUsers    bool
+	TokenDuration    int64
+	SharedSecret     string
+	StorageServerUrl string
+	DatabaseUrl      string
+}
+
+func DefaultTokenServerConfig() TokenServerConfig {
+	return TokenServerConfig{
+		PersonaVerifier:  DEFAULT_PERSONA_VERIFIER,
+		PersonaAudience:  DEFAULT_PERSONA_AUDIENCE,
+		AllowNewUsers:    DEFAULT_ALLOW_NEW_USERS,
+		TokenDuration:    DEFAULT_TOKEN_DURATION,
+		SharedSecret:     DEFAULT_SHARED_SECRET,
+		StorageServerUrl: DEFAULT_STORAGESERVER_URL,
+		DatabaseUrl:      DEFAULT_DATABASE_URL,
+	}
+}
 
 type TokenServerResponse struct {
 	Id          string `json:"id"`           // Signed authorization token
@@ -40,7 +62,8 @@ type TokenServerResponse struct {
 var clientIdValidator = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,32}$`)
 
 type tokenServerContext struct {
-	db *DatabaseSession
+	config TokenServerConfig
+	db     *DatabaseSession
 }
 
 func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +99,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	// Verify the assertion
 
-	verifier, err := NewVerifier(TOKENSERVER_PERSONA_VERIFIER, TOKENSERVER_PERSONA_AUDIENCE)
+	verifier, err := NewVerifier(c.config.PersonaVerifier, c.config.PersonaAudience)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -107,7 +130,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if user == nil {
-		if TOKENSERVER_ALLOW_NEW_USERS {
+		if c.config.AllowNewUsers {
 			user, err = c.db.AllocateUser(personaResponse.Email, generation, clientState)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -167,10 +190,10 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	// Finally, create token and secret
 
-	expires := time.Now().Unix() + TOKENSERVER_TOKEN_DURATION
+	expires := time.Now().Unix() + c.config.TokenDuration
 
 	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, user.NodeId, expires,
-		TOKENSERVER_SHARED_SECRET)
+		c.config.SharedSecret)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -182,8 +205,8 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 		Id:          tokenSecret,
 		Key:         derivedSecret,
 		Uid:         user.Uid,
-		ApiEndpoint: fmt.Sprintf("%s/storage/%s", TOKENSERVER_STORAGESERVER, user.NodeId),
-		Duration:    TOKENSERVER_TOKEN_DURATION,
+		ApiEndpoint: fmt.Sprintf("%s/%s", c.config.StorageServerUrl, user.NodeId),
+		Duration:    c.config.TokenDuration,
 	}
 
 	data, err := json.Marshal(tokenServerResponse)
@@ -196,32 +219,34 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 	w.Write(data)
 }
 
-func SetupTokenServerRouter(r *mux.Router, databaseUrl string) (*tokenServerContext, error) {
-	db, err := NewDatabaseSession(databaseUrl)
+func SetupTokenServerRouter(r *mux.Router, config TokenServerConfig) (*tokenServerContext, error) {
+	db, err := NewDatabaseSession(config.DatabaseUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	context := &tokenServerContext{db: db}
+	context := &tokenServerContext{config: config, db: db}
 	r.HandleFunc("/1.0/sync/1.5", context.SyncTokenHandler)
 
 	return context, nil
 }
 
 func VersionHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("1.0"))
+	w.Write([]byte("1.0")) // TODO: How can we easily embed the git rev and tag in here?
 }
 
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/version", VersionHandler)
 
-	_, err := SetupTokenServerRouter(router.PathPrefix(TOKENSERVER_API_PREFIX).Subrouter(), TOKENSERVER_DATABASE)
+	config := DefaultTokenServerConfig() // TODO: Get this from command line options
+
+	_, err := SetupTokenServerRouter(router.PathPrefix(DEFAULT_API_PREFIX).Subrouter(), config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	addr := fmt.Sprintf("%s:%d", TOKENSERVER_API_LISTEN_ADDRESS, TOKENSERVER_API_LISTEN_PORT)
+	addr := fmt.Sprintf("%s:%d", DEFAULT_API_LISTEN_ADDRESS, DEFAULT_API_LISTEN_PORT)
 	log.Printf("Starting tokenserver server on http://%s", addr)
 	http.Handle("/", router)
 	err = http.ListenAndServe(addr, nil)
