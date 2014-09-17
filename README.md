@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/st3fan/moz-tokenserver.svg?branch=master)](https://travis-ci.org/st3fan/moz-tokenserver)
+[![Build Status](https://travis-ci.org/st3fan/moz-tokenserver.svg?branch=master)](https://travis-ci.org/st3fan/moz-tokenserver) [![Coverage Status](https://coveralls.io/repos/st3fan/moz-tokenserver/badge.png?branch=master)](https://coveralls.io/r/st3fan/moz-tokenserver?branch=master)
+
 
 moz-tokenserver
 ===============
