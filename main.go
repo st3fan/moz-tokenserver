@@ -16,40 +16,6 @@ import (
 )
 
 // TODO: This should all move to either config file or command line options
-const (
-	DEFAULT_API_PREFIX         = "/tokenserver"
-	DEFAULT_API_LISTEN_ADDRESS = "0.0.0.0"
-	DEFAULT_API_LISTEN_PORT    = 8123
-	DEFAULT_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
-	DEFAULT_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
-	DEFAULT_ALLOW_NEW_USERS    = true
-	DEFAULT_TOKEN_DURATION     = 300
-	DEFAULT_SHARED_SECRET      = "cheesebaconeggs"
-	DEFAULT_STORAGESERVER_URL  = "http://127.0.0.1:8124/storage"
-	DEFAULT_DATABASE_URL       = "postgres://tokenserver:tokenserver@localhost/tokenserver"
-)
-
-type TokenServerConfig struct {
-	PersonaVerifier  string
-	PersonaAudience  string
-	AllowNewUsers    bool
-	TokenDuration    int64
-	SharedSecret     string
-	StorageServerUrl string
-	DatabaseUrl      string
-}
-
-func DefaultTokenServerConfig() TokenServerConfig {
-	return TokenServerConfig{
-		PersonaVerifier:  DEFAULT_PERSONA_VERIFIER,
-		PersonaAudience:  DEFAULT_PERSONA_AUDIENCE,
-		AllowNewUsers:    DEFAULT_ALLOW_NEW_USERS,
-		TokenDuration:    DEFAULT_TOKEN_DURATION,
-		SharedSecret:     DEFAULT_SHARED_SECRET,
-		StorageServerUrl: DEFAULT_STORAGESERVER_URL,
-		DatabaseUrl:      DEFAULT_DATABASE_URL,
-	}
-}
 
 type TokenServerResponse struct {
 	Id          string `json:"id"`           // Signed authorization token
