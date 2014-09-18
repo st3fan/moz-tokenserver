@@ -21,6 +21,10 @@ type VerifierRequest struct {
 	Audience  string `json:"audience"`
 }
 
+type Claims struct {
+	Generation int `json:"fxa-generation"`
+}
+
 type VerifierResponse struct {
 	Status   string `json:"status"`
 	Email    string `json:"email"`
@@ -28,6 +32,7 @@ type VerifierResponse struct {
 	Expires  int64  `json:"expires"`
 	Issuer   string `json:"issuer"`
 	Reason   string `json:"reason,omitempty"`
+	Claims   Claims `json:"idpClaims"`
 }
 
 func NewVerifier(verifier, audience string) (*Verifier, error) {
