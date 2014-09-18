@@ -5,7 +5,7 @@
 package main
 
 const (
-	DEFAULT_API_PREFIX         = "/tokenserver"
+	DEFAULT_API_PREFIX         = "/token"
 	DEFAULT_API_LISTEN_ADDRESS = "0.0.0.0"
 	DEFAULT_API_LISTEN_PORT    = 8123
 	DEFAULT_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
