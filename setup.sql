@@ -6,7 +6,6 @@ create table Users (
   Uid          serial not null unique primary key,
   Created      timestamp without time zone default (now() at time zone 'utc'),
   Email        varchar unique not null,
-  NodeId       varchar unique not null,
   Generation   integer not null,
   ClientState  varchar not null
 )

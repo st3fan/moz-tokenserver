@@ -5,18 +5,17 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha1"
+	//"crypto/hmac"
+	//"crypto/rand"
+	//"crypto/sha1"
 	"database/sql"
-	"encoding/hex"
+	//"encoding/hex"
 	_ "github.com/lib/pq"
 )
 
 type User struct {
 	Uid             string
 	Email           string
-	NodeId          string
 	Generation      int
 	ClientState     string
 	OldClientStates []string
@@ -29,25 +28,6 @@ func (u *User) IsOldClientState(clientState string) bool {
 		}
 	}
 	return false
-}
-
-func randomNodeKey() ([]byte, error) {
-	data := make([]byte, 16)
-	_, err := rand.Read(data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func randomNodeId(email string) (string, error) {
-	key, err := randomNodeKey()
-	if err != nil {
-		return "", err
-	}
-	mac := hmac.New(sha1.New, key)
-	mac.Write([]byte(email))
-	return hex.EncodeToString(mac.Sum(nil)), nil
 }
 
 type DatabaseSession struct {
@@ -73,8 +53,8 @@ func (session *DatabaseSession) Close() {
 
 func (ds *DatabaseSession) GetUser(email string) (*User, error) {
 	var user User
-	err := ds.db.QueryRow("select Uid,Email,NodeId,Generation,Clientstate from Users where Email = $1", email).
-		Scan(&user.Uid, &user.Email, &user.NodeId, &user.Generation, &user.ClientState)
+	err := ds.db.QueryRow("select Uid,Email,Generation,Clientstate from Users where Email = $1", email).
+		Scan(&user.Uid, &user.Email, &user.Generation, &user.ClientState)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -86,11 +66,7 @@ func (ds *DatabaseSession) GetUser(email string) (*User, error) {
 }
 
 func (ds *DatabaseSession) AllocateUser(email string, generation int, clientState string) (*User, error) {
-	node, err := randomNodeId(email)
-	if err != nil {
-		return nil, err
-	}
-	_, err = ds.db.Exec("insert into Users (Email, NodeId, Generation, ClientState) values ($1,$2,$3,$4)", email, node, generation, clientState)
+	_, err := ds.db.Exec("insert into Users (Email, Generation, ClientState) values ($1,$2,$3)", email, generation, clientState)
 	if err != nil {
 		return nil, err
 	}
