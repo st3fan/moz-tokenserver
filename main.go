@@ -82,9 +82,10 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Grab some things we need from the assertion
+	// Grab the generation from the assertion. This conveniently
+	// defaults to 0 if it is not present.
 
-	generation := 1 // TODO: This needs to be parsed from the assertion
+	generation := personaResponse.Claims.Generation
 
 	// Load the user. Create if new and if signups are allowed.
 
