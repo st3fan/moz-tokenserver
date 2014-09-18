@@ -64,7 +64,7 @@ func Test_SyncTokenHandler(t *testing.T) {
 	if len(tokenServerResponse.ApiEndpoint) == 0 {
 		t.Fatal("Token server did not return ApiEndpoint")
 	}
-	if !strings.HasPrefix(tokenServerResponse.ApiEndpoint, config.StorageServerUrl) {
+	if !strings.HasPrefix(tokenServerResponse.ApiEndpoint, config.StorageServerNode) {
 		t.Fatal("Token server did not return expected ApiEndpoint")
 	}
 
