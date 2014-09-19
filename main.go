@@ -78,7 +78,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if personaResponse.Status != "okay" {
-		http.Error(w, "Invalid BrowserID assertion", http.StatusUnauthorized)
+		http.Error(w, "Invalid BrowserID assertion: "+personaResponse.Reason, http.StatusUnauthorized)
 		return
 	}
 
