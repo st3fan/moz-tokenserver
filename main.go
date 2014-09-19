@@ -15,12 +15,10 @@ import (
 	"time"
 )
 
-// TODO: This should all move to either config file or command line options
-
 type TokenServerResponse struct {
 	Id          string `json:"id"`           // Signed authorization token
 	Key         string `json:"key"`          // Secret derived from the shared secret
-	Uid         string `json:"uid"`          // The user id for this service
+	Uid         uint64 `json:"uid"`          // The user id for this service
 	ApiEndpoint string `json:"api_endpoint"` // The root URL for the user of this service
 	Duration    int64  `json:"duration"`     // the validity duration of the issued token, in seconds
 }

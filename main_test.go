@@ -57,7 +57,7 @@ func Test_SyncTokenHandler(t *testing.T) {
 		t.Fatal("Token server did not return Key")
 	}
 
-	if len(tokenServerResponse.Uid) == 0 {
+	if tokenServerResponse.Uid == 0 {
 		t.Fatal("Token server did not return Uid")
 	}
 

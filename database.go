@@ -14,7 +14,7 @@ import (
 )
 
 type User struct {
-	Uid             string
+	Uid             uint64
 	Email           string
 	Generation      int
 	ClientState     string

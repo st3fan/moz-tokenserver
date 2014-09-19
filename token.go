@@ -22,7 +22,7 @@ const (
 
 type TokenPayload struct {
 	Salt    string `json: "salt"`
-	Uid     string `json: "uid"`
+	Uid     uint64 `json: "uid"`
 	Node    string `json: "node"`
 	Expires int64  `json: "expires"`
 }
@@ -36,7 +36,7 @@ func randomHexString(length int) (string, error) {
 	return hex.EncodeToString(data), nil
 }
 
-func GenerateSecret(uid string, node string, expires int64, secret string) (string, string, error) {
+func GenerateSecret(uid uint64, node string, expires int64, secret string) (string, string, error) {
 	secretHkdf := hkdf.New(sha256.New, []byte(secret), nil, []byte(HKDF_INFO_SIGNING))
 
 	signatureSecret := make([]byte, sha256.Size)
