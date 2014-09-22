@@ -2,10 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-package main
+package fxa
 
 import (
 	"encoding/json"
+	"github.com/st3fan/moz-tokenserver/fxa"
+	"github.com/st3fan/moz-tokenserver/mockmyid"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,41 +15,6 @@ import (
 )
 
 // TODO: The MockMyID code below should probably move to a mockmyid package in the moz-mockmyid-api project
-
-type MockMyIDResponse struct {
-	Assertion string `json:"assertion"`
-}
-
-func RequestAssertion(email, audience string) (string, error) {
-
-	u, err := url.Parse("https://mockmyid-api.sateh.com/assertion")
-	if err != nil {
-		return "", err
-	}
-
-	parameters := url.Values{}
-	parameters.Add("email", email)
-	parameters.Add("audience", audience)
-	u.RawQuery = parameters.Encode()
-
-	res, err := http.Get(u.String())
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-
-	response := &MockMyIDResponse{}
-	if err = json.Unmarshal(body, response); err != nil {
-		return "", err
-	}
-
-	return response.Assertion, nil
-}
 
 func Test_NewVerifier(t *testing.T) {
 	_, err := NewVerifier(DEFAULT_PERSONA_VERIFIER, DEFAULT_PERSONA_AUDIENCE)
@@ -58,7 +25,7 @@ func Test_NewVerifier(t *testing.T) {
 
 func Test_Verify(t *testing.T) {
 	// Grab an assertion from the mockmyid api
-	assertion, err := RequestAssertion("test@mockmyid.com", DEFAULT_PERSONA_AUDIENCE)
+	assertion, err := mockmyid.RequestAssertion("test@mockmyid.com", DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not request assertion", err)
 	}
@@ -67,7 +34,7 @@ func Test_Verify(t *testing.T) {
 	}
 
 	// Run it through the verifier
-	verifier, err := NewVerifier(DEFAULT_PERSONA_VERIFIER, DEFAULT_PERSONA_AUDIENCE)
+	verifier, err := fxa.NewVerifier(DEFAULT_PERSONA_VERIFIER, DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not create a verifier")
 	}

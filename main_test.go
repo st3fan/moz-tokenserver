@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/st3fan/moz-tokenserver/mockmyid"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,7 +15,7 @@ func init() {
 
 func Test_SyncTokenHandler(t *testing.T) {
 	// Grab an assertion from the mockmyid api
-	assertion, err := RequestAssertion("test@mockmyid.com", DEFAULT_PERSONA_AUDIENCE)
+	assertion, err := mockmyid.RequestAssertion("test@mockmyid.com", DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
 		t.Error("Could not request assertion", err)
 	}

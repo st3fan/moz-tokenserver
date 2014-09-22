@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"github.com/st3fan/moz-tokenserver/fxa"
 	"github.com/st3fan/moz-tokenserver/token"
 )
 
@@ -64,7 +65,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	// Verify the assertion
 
-	verifier, err := NewVerifier(c.config.PersonaVerifier, c.config.PersonaAudience)
+	verifier, err := fxa.NewVerifier(c.config.PersonaVerifier, c.config.PersonaAudience)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
