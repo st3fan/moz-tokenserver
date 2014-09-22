@@ -2,12 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-package main
+package tokenserver
 
 const (
-	DEFAULT_API_PREFIX         = "/token"
-	DEFAULT_API_LISTEN_ADDRESS = "0.0.0.0"
-	DEFAULT_API_LISTEN_PORT    = 8123
 	DEFAULT_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
 	DEFAULT_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
 	DEFAULT_ALLOW_NEW_USERS    = true
