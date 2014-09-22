@@ -157,8 +157,13 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	expires := time.Now().Unix() + c.config.TokenDuration
 
-	tokenSecret, derivedSecret, err := GenerateSecret(user.Uid, c.config.StorageServerNode,
-		expires, c.config.SharedSecret)
+	payload := TokenPayload{
+		Uid:     user.Uid,
+		Node:    c.config.StorageServerNode,
+		Expires: expires,
+	}
+
+	token, err := NewToken([]byte(c.config.SharedSecret), payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -167,8 +172,8 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 	// All done, build a response
 
 	tokenServerResponse := &TokenServerResponse{
-		Id:          tokenSecret,
-		Key:         derivedSecret,
+		Id:          token.Token,
+		Key:         token.DerivedSecret,
 		Uid:         user.Uid,
 		ApiEndpoint: fmt.Sprintf("%s/1.5/%d", c.config.StorageServerNode, user.Uid),
 		Duration:    c.config.TokenDuration,
