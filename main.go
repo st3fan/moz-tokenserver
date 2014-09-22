@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"github.com/st3fan/moz-tokenserver/token"
 )
 
 type TokenServerResponse struct {
@@ -157,13 +158,13 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	expires := time.Now().Unix() + c.config.TokenDuration
 
-	payload := TokenPayload{
+	payload := token.TokenPayload{
 		Uid:     user.Uid,
 		Node:    c.config.StorageServerNode,
 		Expires: expires,
 	}
 
-	token, err := NewToken([]byte(c.config.SharedSecret), payload)
+	token, err := token.NewToken([]byte(c.config.SharedSecret), payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
