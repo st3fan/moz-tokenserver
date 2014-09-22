@@ -11,8 +11,6 @@ import (
 	"testing"
 )
 
-// TODO: The MockMyID code below should probably move to a mockmyid package in the moz-mockmyid-api project
-
 func Test_NewVerifier(t *testing.T) {
 	_, err := NewVerifier(tokenserver.DEFAULT_PERSONA_VERIFIER, tokenserver.DEFAULT_PERSONA_AUDIENCE)
 	if err != nil {
