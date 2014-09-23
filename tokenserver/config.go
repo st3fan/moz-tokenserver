@@ -14,7 +14,7 @@ const (
 	DEFAULT_DATABASE_URL       = "postgres://tokenserver:tokenserver@localhost/tokenserver"
 )
 
-type TokenServerConfig struct {
+type Config struct {
 	PersonaVerifier   string
 	PersonaAudience   string
 	AllowNewUsers     bool
@@ -24,8 +24,8 @@ type TokenServerConfig struct {
 	DatabaseUrl       string
 }
 
-func DefaultTokenServerConfig() TokenServerConfig {
-	return TokenServerConfig{
+func DefaultConfig() Config {
+	return Config{
 		PersonaVerifier:   DEFAULT_PERSONA_VERIFIER,
 		PersonaAudience:   DEFAULT_PERSONA_AUDIENCE,
 		AllowNewUsers:     DEFAULT_ALLOW_NEW_USERS,

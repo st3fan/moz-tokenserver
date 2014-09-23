@@ -26,9 +26,9 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/version", VersionHandler)
 
-	config := tokenserver.DefaultTokenServerConfig() // TODO: Get this from command line options
+	config := tokenserver.DefaultConfig() // TODO: Get this from command line options
 
-	_, err := tokenserver.SetupTokenServerRouter(router.PathPrefix(DEFAULT_API_PREFIX).Subrouter(), config)
+	_, err := tokenserver.SetupRouter(router.PathPrefix(DEFAULT_API_PREFIX).Subrouter(), config)
 	if err != nil {
 		log.Fatal(err)
 	}

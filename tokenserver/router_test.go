@@ -31,8 +31,8 @@ func Test_SyncTokenHandler(t *testing.T) {
 
 	//
 	router := mux.NewRouter()
-	config := DefaultTokenServerConfig()
-	context, err := SetupTokenServerRouter(router.PathPrefix("/tokenserver").Subrouter(), config)
+	config := DefaultConfig()
+	context, err := SetupRouter(router.PathPrefix("/tokenserver").Subrouter(), config)
 	if err != nil {
 		panic("Cannot setup router")
 	}

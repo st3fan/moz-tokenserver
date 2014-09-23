@@ -27,7 +27,7 @@ type TokenServerResponse struct {
 var clientIdValidator = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,32}$`)
 
 type tokenServerContext struct {
-	config TokenServerConfig
+	config Config
 	db     *DatabaseSession
 }
 
@@ -190,7 +190,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 	w.Write(data)
 }
 
-func SetupTokenServerRouter(r *mux.Router, config TokenServerConfig) (*tokenServerContext, error) {
+func SetupRouter(r *mux.Router, config Config) (*tokenServerContext, error) {
 	db, err := NewDatabaseSession(config.DatabaseUrl)
 	if err != nil {
 		return nil, err
