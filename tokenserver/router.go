@@ -110,7 +110,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 
 	// Deal with generation
 
-	newGeneration := 0
+	var newGeneration uint64
 	newClientState := ""
 
 	if generation > user.Generation {

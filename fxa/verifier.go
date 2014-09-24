@@ -22,7 +22,7 @@ type VerifierRequest struct {
 }
 
 type Claims struct {
-	Generation int `json:"fxa-generation"`
+	Generation uint64 `json:"fxa-generation"`
 }
 
 type VerifierResponse struct {

@@ -12,7 +12,7 @@ import (
 type User struct {
 	Uid             uint64
 	Email           string
-	Generation      int
+	Generation      uint64
 	ClientState     string
 	OldClientStates []string
 }
@@ -61,7 +61,7 @@ func (ds *DatabaseSession) GetUser(email string) (*User, error) {
 	return &user, nil
 }
 
-func (ds *DatabaseSession) AllocateUser(email string, generation int, clientState string) (*User, error) {
+func (ds *DatabaseSession) AllocateUser(email string, generation uint64, clientState string) (*User, error) {
 	_, err := ds.db.Exec("insert into Users (Email, Generation, ClientState) values ($1,$2,$3)", email, generation, clientState)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (ds *DatabaseSession) AllocateUser(email string, generation int, clientStat
 	return ds.GetUser(email)
 }
 
-func (ds *DatabaseSession) UpdateUser(email string, newGeneration int, newClientState string) (*User, error) {
+func (ds *DatabaseSession) UpdateUser(email string, newGeneration uint64, newClientState string) (*User, error) {
 	// TODO: Maybe this should run together in a transaction?
 	if newGeneration != 0 {
 		_, err := ds.db.Exec("update Users set Generation = $1 where Email = $2", newGeneration, email)
