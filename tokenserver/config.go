@@ -6,12 +6,12 @@ package tokenserver
 
 const (
 	DEFAULT_PERSONA_VERIFIER   = "https://verifier.accounts.firefox.com/v2"
-	DEFAULT_PERSONA_AUDIENCE   = "https://tokenserver.sateh.com"
+	DEFAULT_PERSONA_AUDIENCE   = "http://127.0.0.1"
 	DEFAULT_ALLOW_NEW_USERS    = true
 	DEFAULT_TOKEN_DURATION     = 300
-	DEFAULT_SHARED_SECRET      = "cheesebaconeggs"
+	DEFAULT_SHARED_SECRET      = "ThisIsAnImportantSecretThatYouShouldChange"
 	DEFAULT_STORAGESERVER_NODE = "http://127.0.0.1:8124/storage"
-	DEFAULT_DATABASE_URL       = "postgres://tokenserver:tokenserver@localhost/tokenserver"
+	DEFAULT_DATABASE_PATH      = "/tmp/tokenserver.db"
 )
 
 type Config struct {
@@ -21,7 +21,7 @@ type Config struct {
 	TokenDuration     int64
 	SharedSecret      string
 	StorageServerNode string
-	DatabaseUrl       string
+	DatabasePath      string
 }
 
 func DefaultConfig() Config {
@@ -32,6 +32,6 @@ func DefaultConfig() Config {
 		TokenDuration:     DEFAULT_TOKEN_DURATION,
 		SharedSecret:      DEFAULT_SHARED_SECRET,
 		StorageServerNode: DEFAULT_STORAGESERVER_NODE,
-		DatabaseUrl:       DEFAULT_DATABASE_URL,
+		DatabasePath:      DEFAULT_DATABASE_PATH,
 	}
 }
