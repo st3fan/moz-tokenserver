@@ -5,8 +5,8 @@
 package tokenserver
 
 import (
-	"database/sql"
-	_ "github.com/lib/pq"
+	"encoding/json"
+	"github.com/boltdb/bolt"
 )
 
 type User struct {
@@ -27,20 +27,20 @@ func (u *User) IsOldClientState(clientState string) bool {
 }
 
 type DatabaseSession struct {
-	url string
-	db  *sql.DB
+	path string
+	db   *bolt.DB
 }
 
-func NewDatabaseSession(url string) (*DatabaseSession, error) {
-	db, err := sql.Open("postgres", url)
+func NewDatabaseSession(path string) (*DatabaseSession, error) {
+	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-	return &DatabaseSession{url: url, db: db}, nil
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("Users"))
+		return err
+	})
+	return &DatabaseSession{path: path, db: db}, nil
 }
 
 func (session *DatabaseSession) Close() {
@@ -48,40 +48,110 @@ func (session *DatabaseSession) Close() {
 }
 
 func (ds *DatabaseSession) GetUser(email string) (*User, error) {
-	var user User
-	err := ds.db.QueryRow("select Uid,Email,Generation,Clientstate from Users where Email = $1", email).
-		Scan(&user.Uid, &user.Email, &user.Generation, &user.ClientState)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		} else {
-			return nil, err
+	var user *User
+
+	err := ds.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("Users"))
+		encodedUser := bucket.Get([]byte(email))
+		if encodedUser == nil {
+			return nil
 		}
-	}
-	return &user, nil
+
+		var u User
+		err := json.Unmarshal(encodedUser, &u)
+		if err != nil {
+			return err
+		}
+
+		user = &u
+
+		return err
+	})
+
+	return user, err
 }
 
 func (ds *DatabaseSession) AllocateUser(email string, generation uint64, clientState string) (*User, error) {
-	_, err := ds.db.Exec("insert into Users (Email, Generation, ClientState) values ($1,$2,$3)", email, generation, clientState)
-	if err != nil {
-		return nil, err
-	}
-	return ds.GetUser(email)
+	var user *User
+
+	err := ds.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("Users"))
+
+		uid, err := bucket.NextSequence()
+		if err != nil {
+			return err
+		}
+
+		u := &User{
+			Uid:         uid,
+			Email:       email,
+			Generation:  generation,
+			ClientState: clientState,
+		}
+
+		encodedUser, err := json.Marshal(u)
+		if err != nil {
+			return err
+		}
+
+		err = bucket.Put([]byte(email), encodedUser)
+		if err != nil {
+			return err
+		}
+
+		user = u
+
+		return nil
+	})
+
+	return user, err
 }
 
 func (ds *DatabaseSession) UpdateUser(email string, newGeneration uint64, newClientState string) (*User, error) {
-	// TODO: Maybe this should run together in a transaction?
-	if newGeneration != 0 {
-		_, err := ds.db.Exec("update Users set Generation = $1 where Email = $2", newGeneration, email)
-		if err != nil {
-			return nil, err
+	var user *User
+
+	err := ds.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("Users"))
+
+		// Get the existing user record
+
+		encodedUser := bucket.Get([]byte(email))
+		if encodedUser == nil {
+			return nil
 		}
-	}
-	if len(newClientState) != 0 {
-		_, err := ds.db.Exec("update Users set ClientState = $1 where Email = $2", newClientState, email)
+
+		var u User
+		err := json.Unmarshal(encodedUser, &u)
 		if err != nil {
-			return nil, err
+			return err
 		}
-	}
-	return ds.GetUser(email)
+
+		// Update the user with the fields that have changed
+
+		if newGeneration != 0 {
+			u.Generation = newGeneration
+		}
+
+		if newClientState != "" {
+			u.ClientState = newClientState
+		}
+
+		// Write the user back to the database
+
+		encodedUser, err = json.Marshal(u)
+		if err != nil {
+			return err
+		}
+
+		err = bucket.Put([]byte(email), encodedUser)
+		if err != nil {
+			return err
+		}
+
+		user = &u
+
+		return nil
+	})
+
+	return user, err
 }

@@ -191,7 +191,7 @@ func (c *tokenServerContext) SyncTokenHandler(w http.ResponseWriter, r *http.Req
 }
 
 func SetupRouter(r *mux.Router, config Config) (*tokenServerContext, error) {
-	db, err := NewDatabaseSession(config.DatabaseUrl)
+	db, err := NewDatabaseSession(config.DatabasePath)
 	if err != nil {
 		return nil, err
 	}
